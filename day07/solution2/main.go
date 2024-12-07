@@ -32,6 +32,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	equations := make([]Equation, 0)
+	maxLength := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.Split(line, " ")
@@ -50,16 +51,22 @@ func main() {
 			testValue: testValue,
 			values: values,
 		})
+		if len(values) > maxLength {
+			maxLength = len(values)
+		}
 	}
 
 	res := 0
 	var wg sync.WaitGroup
 	resCh := make(chan int)
+	cache := make(map[int][][]string)
+	// prime the cache
+	generateOpStacks(maxLength, cache)
 	for _, equation := range equations {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			opStacks := generateOpStacks(len(equation.values))
+			opStacks := generateOpStacks(len(equation.values), cache)
 			for _, opStack := range opStacks {
 				x := calcStack(equation.values, opStack)
 				if x == equation.testValue {
@@ -85,12 +92,15 @@ func main() {
 	fmt.Printf("Process took %v\n", duration)
 }
 
-func generateOpStacks(x int) [][]string {
+func generateOpStacks(x int, cache map[int][][]string) [][]string {
 	if x == 2 {
 		res := [][]string{ {"*"}, {"+"}, {"|"} }
 		return res;
 	} else {
-		prev := generateOpStacks(x-1)
+		if y, ok := cache[x]; ok {
+			return y;
+		}
+		prev := generateOpStacks(x-1, cache)
 
 		res := make([][]string, len(prev)*3)
 		for i,o := range prev {
@@ -109,6 +119,7 @@ func generateOpStacks(x int) [][]string {
 			res[i*3+1] = o2
 			res[i*3+2] = o3
 		}
+		cache[x] = res
 		return res
 	}
 }
