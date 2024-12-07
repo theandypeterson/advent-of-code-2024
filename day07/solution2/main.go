@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -52,29 +53,44 @@ func main() {
 	}
 
 	res := 0
+	var wg sync.WaitGroup
+	resCh := make(chan int)
 	for _, equation := range equations {
-		opStacks := generateOpStacks(len(equation.values))
-		for _, opStack := range opStacks {
-			x := equation.values[0]
-			for i, op := range opStack {
-				if op == "*" {
-					x = x * equation.values[i+1]
-				} else if op == "+" {
-					x = x + equation.values[i+1]
-				} else {
-					y := equation.values[i+1]
-					z := 1
-					for z < y {
-						z *=10
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			opStacks := generateOpStacks(len(equation.values))
+			for _, opStack := range opStacks {
+				x := equation.values[0]
+				for i, op := range opStack {
+					if op == "*" {
+						x = x * equation.values[i+1]
+					} else if op == "+" {
+						x = x + equation.values[i+1]
+					} else {
+						y := equation.values[i+1]
+						z := 1
+						for z < y {
+							z *=10
+						}
+						x = x*z+y
 					}
-					x = x*z+y
+				}
+				if x == equation.testValue {
+					resCh<-x
+					break
 				}
 			}
-			if x == equation.testValue {
-				res += x
-				break
-			}
-		}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(resCh)
+	}()
+
+	for x := range resCh {
+		res += x
 	}
 
 	fmt.Printf("Result: %v\n", res)
