@@ -61,21 +61,7 @@ func main() {
 			defer wg.Done()
 			opStacks := generateOpStacks(len(equation.values))
 			for _, opStack := range opStacks {
-				x := equation.values[0]
-				for i, op := range opStack {
-					if op == "*" {
-						x = x * equation.values[i+1]
-					} else if op == "+" {
-						x = x + equation.values[i+1]
-					} else {
-						y := equation.values[i+1]
-						z := 1
-						for z < y {
-							z *=10
-						}
-						x = x*z+y
-					}
-				}
+				x := calcStack(equation.values, opStack)
 				if x == equation.testValue {
 					resCh<-x
 					break
@@ -125,4 +111,23 @@ func generateOpStacks(x int) [][]string {
 		}
 		return res
 	}
+}
+
+func calcStack(values []int, opStack []string) int  {
+	x := values[0]
+	for i, op := range opStack {
+		if op == "*" {
+			x = x * values[i+1]
+		} else if op == "+" {
+			x = x + values[i+1]
+		} else {
+			y := values[i+1]
+			z := 1
+			for z < y {
+				z *=10
+			}
+			x = x*z+y
+		}
+	}
+	return x
 }
