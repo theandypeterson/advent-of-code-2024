@@ -142,8 +142,8 @@ func calcStack(values []int, opStack []int) int  {
 }
 
 func smush(a int, b int) int {
-	ystring := strconv.Itoa(b)
-	xstring := strconv.Itoa(a)
-	xint,_ := strconv.Atoi(xstring+ystring)
-	return xint
+	if b==0 {
+		return a;
+	}
+	return smush(a, b/10)*10+ b%10;
 }
