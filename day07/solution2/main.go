@@ -59,9 +59,12 @@ func main() {
 	res := 0
 	var wg sync.WaitGroup
 	resCh := make(chan int)
-	cache := make(map[int][][]string)
+	cache := make(map[int][][]int)
 	// prime the cache
+	genStart := time.Now()
 	generateOpStacks(maxLength, cache)
+	genDuration := time.Since(genStart)
+	fmt.Printf("genDuration: %v\n", genDuration)
 	for _, equation := range equations {
 		wg.Add(1)
 		go func() {
@@ -92,9 +95,9 @@ func main() {
 	fmt.Printf("Process took %v\n", duration)
 }
 
-func generateOpStacks(x int, cache map[int][][]string) [][]string {
+func generateOpStacks(x int, cache map[int][][]int) [][]int {
 	if x == 2 {
-		res := [][]string{ {"*"}, {"+"}, {"|"} }
+		res := [][]int{ {1}, {2}, {3} }
 		return res;
 	} else {
 		if y, ok := cache[x]; ok {
@@ -102,19 +105,19 @@ func generateOpStacks(x int, cache map[int][][]string) [][]string {
 		}
 		prev := generateOpStacks(x-1, cache)
 
-		res := make([][]string, len(prev)*3)
+		res := make([][]int, len(prev)*3)
 		for i,o := range prev {
-			o1 := make([]string, x-1)
-			o2 := make([]string, x-1)
-			o3 := make([]string, x-1)
+			o1 := make([]int, x-1)
+			o2 := make([]int, x-1)
+			o3 := make([]int, x-1)
 			for ii,oo := range o {
 				o1[ii] = oo
 				o2[ii] = oo
 				o3[ii] = oo
 			}
-			o1[x-2] = "*"
-			o2[x-2] = "+"
-			o3[x-2] = "|"
+			o1[x-2] = 1
+			o2[x-2] = 2
+			o3[x-2] = 3
 			res[i*3] = o1
 			res[i*3+1] = o2
 			res[i*3+2] = o3
@@ -124,21 +127,23 @@ func generateOpStacks(x int, cache map[int][][]string) [][]string {
 	}
 }
 
-func calcStack(values []int, opStack []string) int  {
+func calcStack(values []int, opStack []int) int  {
 	x := values[0]
 	for i, op := range opStack {
-		if op == "*" {
+		if op == 1 {
 			x = x * values[i+1]
-		} else if op == "+" {
+		} else if op == 2 {
 			x = x + values[i+1]
 		} else {
-			y := values[i+1]
-			z := 1
-			for z < y {
-				z *=10
-			}
-			x = x*z+y
+			x = smush(x,values[i+1])
 		}
 	}
 	return x
+}
+
+func smush(a int, b int) int {
+	ystring := strconv.Itoa(b)
+	xstring := strconv.Itoa(a)
+	xint,_ := strconv.Atoi(xstring+ystring)
+	return xint
 }
