@@ -8,12 +8,6 @@ import (
 	"time"
 )
 
-type Antenna struct {
-	x int
-	y int
-	freq string
-}
-
 type Grid [][]string
 
 type Coor struct {
